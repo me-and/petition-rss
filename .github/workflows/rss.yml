@@ -33,11 +33,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v4
+      - name: Build RSS site
+        run: |
+          mkdir -p output
+          curl https://petition.parliament.uk/petitions.json\?state=recent | jq -r '.data | map({title: .attributes.action | @html, link: .links.self | rtrimstr(".json") | @html, description: [.attributes.background, .attributes.additional_details] | join("\r\n\r\n") | rtrimstr("\r\n") | gsub("\\]\\]>";"]]]]><![CDATA[>") | "<![CDATA[\(.)]]>"} | "<item><title>\(.title)</title><link>\(.link)</link><description>\(.description)</description></item>") | "<rss version=\"2.0\"><channel><title>Recent UK Government and Parliament petitions</title><link>https://petition.parliament.uk/petitions?state=recent</link><description>Recent petitions published on petition.parliament.uk</description><language>en-GB</language><copyright>Crown Copyright.  All content is available under the Open Government Licence v3.0, except where otherwise stated.</copyright><generator>Adam'\''s Quick Petition Feeder 0.\(now)</generator>\(join(""))</channel></rss>"' > output/petitions.rss
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: output
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

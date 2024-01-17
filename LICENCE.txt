@@ -1,0 +1,8 @@
+You may use the content in this repository under your choice of the Creative
+Commons Attribution 4.0 International licence or the MIT licence.
+
+No copyright is claimed over the content of the RSS feed, which is content from
+https://petition.parliament.uk/ repackaged for consumption by RSS feed readers.
+
+The individual licence texts should have been included in appropriately named
+files in this repository.

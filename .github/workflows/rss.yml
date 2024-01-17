@@ -1,9 +1,8 @@
 name: Deploy RSS feed
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on all pushes
   push:
-    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -43,11 +42,12 @@ jobs:
       - name: Build RSS page
         run: |
           mkdir -p output
-          curl --user-agent "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" https://petition.parliament.uk/petitions.json\?state=recent | jq -r --arg repoUrl "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" '.data | map({title: .attributes.action | @html, link: .links.self | rtrimstr(".json") | @html, description: [.attributes.background, .attributes.additional_details] | join("\r\n\r\n") | rtrimstr("\r\n") | gsub("\\]\\]>";"]]]]><![CDATA[>") | "<![CDATA[\(.)]]>", pubDate: .attributes.opened_at | sub("\\.\\d\\d\\dZ$";"Z") | fromdate | strftime("%d %b %Y %T Z")} | "<item><title>\(.title)</title><link>\(.link)</link><description>\(.description)</description><guid>\(.link)</guid></item>") | "<rss version=\"2.0\"><channel><title>Recent UK Government and Parliament petitions</title><link>https://petition.parliament.uk/petitions?state=recent</link><description>Recent petitions published on petition.parliament.uk</description><language>en-GB</language><copyright>Crown Copyright.  All content is available under the Open Government Licence v3.0, except where otherwise stated.</copyright><generator>\($repoUrl | @html)</generator><lastBuildDate>\(now | strftime("%d %b %Y %T Z"))</lastBuildDate>\(join(""))</channel></rss>"' > output/petitions.rss
+          curl --user-agent "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" https://petition.parliament.uk/petitions.json\?state=recent | jq -r -f rss.jq > output/petitions.rss
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: output
       - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
         id: deployment
         uses: actions/deploy-pages@v4

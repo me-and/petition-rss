@@ -7,32 +7,38 @@ def dateisoto822:
     | strftime("%d %b %Y %T Z")
     ;
 
+def formatattributes:
+        .attributes
+        | to_entries
+        | map("\(.key)=\"\(.value | @html)\"")
+        | join(" ")
+        ;
+
+# Convert JSON items to an XML-formatted string.
+#
+# - Objects get converted in different ways depending on their keys:
+#   - If an object has a "key" key, the key becomes the element name.  If
+#     there's an "attributes" key, it must be an object, where keys are the
+#     attribute names on the element, and the values are the attribute values.
+#     If there's a "value" key, its value becomes the element content.
+#   - If the object does not have a "key" key, it's converted into a list of
+#     objects using `to_entries`, which means it will be taken as a list of XML
+#     elements and their contents.  This is essentially a more compact way of
+#     achieving the previous approach for XML elements that don't have
+#     attributes.
+# - Arrays are converted element-by-element, then concatenated together.
+# - The null object is converted to an empty string.
+# - Anything else is converted to a string.
 def jsontoxml:
-    type as $type |
-    if $type == "object"
-    then (if .key? == null
-          then to_entries | jsontoxml
-          else ("<"
-                + ([.key]
-                   + (.attributes?
-                      | if . == null
-                        then []
-                        else to_entries
-                             | map("\(.key)=\"\(.value | @html)\"")
-                        end)
-                      | join(" ")
-                   )
-                + ">"
-                + (.value? | jsontoxml)
-                + "</"
-                + .key
-                + ">"
-                )
-         end
-        )
-    elif $type == "array"
+    if type == "object" and has("key") and has("attributes")
+    then "<\(.key) \(formatattributes)>\(.value? | jsontoxml)</\(.key)>"
+    elif type == "object" and has("key")
+    then "<\(.key)>\(.value? | jsontoxml)</\(.key)>"
+    elif type == "object"
+    then to_entries | jsontoxml
+    elif type == "array"
     then map(jsontoxml) | add
-    elif $type == "null"
+    elif type == "null"
     then ""
     else @html
     end
@@ -64,3 +70,5 @@ def petitionjsontoxml:
          }
  }
 | jsontoxml
+
+# vim: ts=8 expandtab

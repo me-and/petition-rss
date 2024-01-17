@@ -1,5 +1,4 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy RSS feed
 
 on:
   # Runs on pushes targeting the default branch
@@ -9,6 +8,8 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+  # Run every hour at 22 minutes past the hour.  22 was selected randomly to
+  # avoid bunching work at any particular time.
   schedule:
     - cron: '22 * * * *'
 
@@ -18,14 +19,17 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Allow only one concurrent deployment, skipping runs queued between the run
+# in-progress and latest queued.  However, do NOT cancel in-progress runs as we
+# want to allow these production deployments to complete.
+#
+# This was included in the GitHub Pages template action, and I see no reason to
+# change it.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
@@ -36,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      - name: Build RSS site
+      - name: Build RSS page
         run: |
           mkdir -p output
           curl --user-agent "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" https://petition.parliament.uk/petitions.json\?state=recent | jq -r --arg repoUrl "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" '.data | map({title: .attributes.action | @html, link: .links.self | rtrimstr(".json") | @html, description: [.attributes.background, .attributes.additional_details] | join("\r\n\r\n") | rtrimstr("\r\n") | gsub("\\]\\]>";"]]]]><![CDATA[>") | "<![CDATA[\(.)]]>", pubDate: .attributes.opened_at | sub("\\.\\d\\d\\dZ$";"Z") | fromdate | strftime("%d %b %Y %T Z")} | "<item><title>\(.title)</title><link>\(.link)</link><description>\(.description)</description><guid>\(.link)</guid></item>") | "<rss version=\"2.0\"><channel><title>Recent UK Government and Parliament petitions</title><link>https://petition.parliament.uk/petitions?state=recent</link><description>Recent petitions published on petition.parliament.uk</description><language>en-GB</language><copyright>Crown Copyright.  All content is available under the Open Government Licence v3.0, except where otherwise stated.</copyright><generator>\($repoUrl | @html)</generator><lastBuildDate>\(now | strftime("%d %b %Y %T Z"))</lastBuildDate>\(join(""))</channel></rss>"' > output/petitions.rss

@@ -1,0 +1,19 @@
+name: Keep GitHub Actions running
+on:
+  schedule:
+    # Equally spaced from a random starting point throughout the year, chosen
+    # to make sure there's enough slack to kick things at least every 60 days.
+    - cron: '2 11 10 2 *'
+    - cron: '54 14 3 4 *'
+    - cron: '20 18 25 5 *'
+    - cron: '46 21 16 7 *'
+    - cron: '12 1 7 9 *'
+    - cron: '37 4 29 10 *'
+    - cron: '3 8 20 12 *'
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: liskin/gh-workflow-keepalive@f72ff1a1336129f29bf0166c0fd0ca6cf1bcb38c

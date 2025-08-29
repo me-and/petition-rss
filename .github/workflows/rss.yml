@@ -44,7 +44,7 @@ jobs:
           mkdir -p output
           curl --user-agent "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" https://petition.parliament.uk/petitions.json\?state=recent | jq -r -f rss.jq > output/petitions.rss
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: output
       - name: Deploy to GitHub Pages
